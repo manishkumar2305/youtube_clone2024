@@ -1,0 +1,27 @@
+
+# List files or directories below to ignore them when running prettier
+# More information: https://prettier.io/docs/en/ignore.html
+#
+
+.localdevserver
+.sfdx
+.vscode
+jsconfig.json
+.env
+.env*
+.env.*
+node_modules
+node_modules_container
+docs
+.git
+jdl/**/.jhipster/**
+.vscode-test
+**/templates/**/
+**/jdl-core.min.js
+**/generated-serialized-grammar.js
+test/fixtures/**
+dist
+coverage
+coverage/
+.Prettierrc
+.Prettierignore

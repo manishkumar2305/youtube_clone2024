@@ -1,0 +1,27 @@
+{
+  "name": "youtube_clone",
+  "version": "1.0.0",
+  "description": "Youtube Clone is a full stack web application which same to same refer youtube videos",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [
+    "youtube",
+    "javascript",
+    "nodejs",
+    "expressjs",
+    "youtubeclone"
+  ],
+  "author": "Manish Sirawta",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.4",
+    "prettier": "^3.3.3"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mongoose": "^8.6.1"
+  }
+}
