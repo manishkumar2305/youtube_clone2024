@@ -4,6 +4,31 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinaryService.js";
 import { apiResponse } from "../utils/apiResponse.js";
 
+// Create access token and refresh token
+const genrateAccessAndRefreshToken = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken = await user.genrateAccessToken();
+    const refreshToken = await user.genrateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new apiError(
+      500,
+      "Somthing went wrong while genrating access and refresh token."
+    );
+  }
+};
+
+// Global option for cookies genrate securily
+const options = {
+  httpOnly: true,
+  secure: true,
+};
+
 // Create register user
 const registerUser = asyncHandler(async (req, res) => {
   // get user details from frontend
@@ -79,4 +104,55 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, createdUser, "User created is successfully!"));
 });
 
-export { registerUser };
+// Login user
+const loginUser = asyncHandler(async (req, res) => {
+  // get user details from frontend
+  // validation - not empty
+  // check if user already exists: username, email
+  // check password
+  // access token and refresh token create
+  // set cookies
+  // response cookies
+
+  try {
+    const { email, userName, password } = req.body;
+
+    if ((email === "" || userName === "") && password === "") {
+      throw new apiError(400, "All fields are required!");
+    }
+
+    // User check
+    const exiestenceUser = await User.findOne({
+      $or: [{ userName }, { email }],
+    });
+
+    if (!exiestenceUser) {
+      throw new apiError(404, "User not found!");
+    }
+
+    //Password check
+    const verifyPassword = await exiestenceUser.isPasswordCorrect(password);
+
+    if (!verifyPassword) {
+      throw new apiError(401, "Invalid user credential!");
+    }
+
+    const { accessToken, refreshToken } = await genrateAccessAndRefreshToken(
+      exiestenceUser._id
+    );
+
+    const loggedInUser = await User.findById(exiestenceUser._id).select(
+      "-password -refreshToken"
+    );
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken)
+      .cookie("refreshtoken", refreshToken)
+      .json(new apiResponse(200, loggedInUser, "User loggedin successfully!"));
+  } catch (error) {
+    throw new apiError(500, error);
+  }
+});
+
+export { registerUser, loginUser };
