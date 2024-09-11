@@ -256,4 +256,111 @@ const updateUserPassword = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, recreateAccessToken };
+// User details update
+const userDetaildsUpdate = asyncHandler(async (req, res) => {
+  try {
+    const { fullName, email } = req.body;
+
+    if (!fullName !== "" && email !== "") {
+      throw new apiError(400, "All fields are required");
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user?._id,
+      {
+        $set: { fullName, email },
+      },
+      { new: true }
+    );
+
+    return res
+      .status(200)
+      .json(new apiResponse(200, user, "User details updated successfully."));
+  } catch (error) {
+    throw new apiError(
+      400,
+      error?.message || "Somthing went wrong while user details updation"
+    );
+  }
+});
+
+// avatar update
+const avatarUpdate = asyncHandler(async (req, res) => {
+  try {
+    const avatarLocalPath = req.file?.path;
+
+    if (!avatarLocalPath) {
+      throw new apiError(400, "Avatar is required file");
+    }
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+    if (!avatar) {
+      throw new apiError(400, "Avatar is required file");
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user?._id,
+      {
+        $set: { avatar: avatar?.url },
+      },
+      { new: true }
+    );
+
+    return res
+      .status(200)
+      .json(new apiResponse(200, user, "Avatar file updated successfully."));
+  } catch (error) {
+    throw new apiError(
+      400,
+      error?.message || "Somthing went wrong while avatar file updation"
+    );
+  }
+});
+
+// Cover image update
+const coverImageUpdate = asyncHandler(async (req, res) => {
+  try {
+    const coverImageLocalPath = req.file?.path;
+
+    if (!coverImageLocalPath) {
+      throw new apiError(400, "Avatar is required file");
+    }
+
+    const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+
+    if (!coverImage) {
+      throw new apiError(400, "Avatar is required file");
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user?._id,
+      {
+        $set: { coverImage: coverImage?.url },
+      },
+      { new: true }
+    );
+
+    return res
+      .status(200)
+      .json(
+        new apiResponse(200, user, "Cover image file updated successfully.")
+      );
+  } catch (error) {
+    throw new apiError(
+      400,
+      error?.message || "Somthing went wrong while cover image file updation"
+    );
+  }
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  recreateAccessToken,
+  updateUserPassword,
+  userDetaildsUpdate,
+  avatarUpdate,
+  coverImageUpdate,
+};
