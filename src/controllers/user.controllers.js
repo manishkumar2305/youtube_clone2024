@@ -223,4 +223,37 @@ const recreateAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
+// Update user password
+const updateUserPassword = asyncHandler(async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword !== "" && newPassword !== "") {
+      throw new apiError(400, "All fields are required");
+    }
+
+    const user = await User.findById(req.user?._id);
+
+    const isPasswordValid = await isPasswordCorrect(oldPassword);
+
+    if (isPasswordValid) {
+      throw new apiError(401, "Old password is invalid");
+    }
+
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+
+    return res
+      .status(200)
+      .json(
+        new apiResponse(200, {}, "Your new password updated successfully.")
+      );
+  } catch (error) {
+    throw new apiError(
+      400,
+      error?.message || "Somthing went wrong while passowrd updation"
+    );
+  }
+});
+
 export { registerUser, loginUser, logoutUser, recreateAccessToken };
