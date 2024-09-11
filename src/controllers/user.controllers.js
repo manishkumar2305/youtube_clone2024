@@ -3,6 +3,7 @@ import { apiError } from "../utils/apiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinaryService.js";
 import { apiResponse } from "../utils/apiResponse.js";
+import jwt from "jsonwebtoken";
 
 // Create access token and refresh token
 const genrateAccessAndRefreshToken = async (userId) => {
@@ -148,7 +149,7 @@ const loginUser = asyncHandler(async (req, res) => {
     return res
       .status(200)
       .cookie("accessToken", accessToken)
-      .cookie("refreshtoken", refreshToken)
+      .cookie("refreshToken", refreshToken)
       .json(new apiResponse(200, loggedInUser, "User loggedin successfully!"));
   } catch (error) {
     throw new apiError(500, error);
@@ -176,4 +177,50 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, {}, "User logged out successfully"));
 });
 
-export { registerUser, loginUser, logoutUser };
+// Recreate access token when token expire
+const recreateAccessToken = asyncHandler(async (req, res) => {
+  const exiestRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+
+  console.log("asdas: ", exiestRefreshToken);
+
+  if (!exiestRefreshToken) {
+    throw new apiError(401, "Unauthorized user.");
+  }
+
+  try {
+    const decodeToken = jwt.verify(
+      exiestRefreshToken,
+      process.env.JWT_REFRESH_TOKEN_SECRET
+    );
+
+    const user = await User.findById(decodeToken?._id);
+
+    if (!user) {
+      throw new apiError(401, "Invalild refresh token.");
+    }
+
+    if (exiestRefreshToken !== user?.refreshToken) {
+      throw new apiError(401, "Refresh token is expire and used.");
+    }
+
+    const { accessToken, newRefreshToken } = await genrateAccessAndRefreshToken(
+      user._id
+    );
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new apiResponse(
+          200,
+          { accessToken, refreshToken: newRefreshToken },
+          "Access token newly created successfully"
+        )
+      );
+  } catch (error) {
+    throw new apiError(401, error?.message || "Invalid refresh token");
+  }
+});
+
+export { registerUser, loginUser, logoutUser, recreateAccessToken };
