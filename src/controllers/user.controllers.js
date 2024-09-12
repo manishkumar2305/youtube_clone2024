@@ -354,6 +354,62 @@ const coverImageUpdate = asyncHandler(async (req, res) => {
   }
 });
 
+// User channel profile details
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  const { userName } = req.params;
+
+  if (!userName?.trim()) {
+    throw new apiError(400, "User is missing.");
+  }
+
+  const channel = await User.aggregate([
+    // match user is avaliable or not or same user
+    {
+      $match: {
+        userName: userName?.toLowerCase(),
+      },
+    },
+    // get channel details
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+    // get subscriber details
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $project: {
+        fullName: 1,
+        userName: 1,
+        email: 1,
+        avatar: 1,
+        coverImage: 1,
+        subscribersCount: 1,
+        channelIsSubcribeToCount: 1,
+        isSubscribed: 1,
+      },
+    },
+  ]);
+
+  if (!channel?.length) {
+    throw new apiError(404, "Channel is not exiest");
+  }
+
+  res
+    .status(200)
+    .json(new apiResponse(200, channel[0], "Channel fetch is successfully!"));
+});
+
 export {
   registerUser,
   loginUser,
@@ -363,4 +419,5 @@ export {
   userDetaildsUpdate,
   avatarUpdate,
   coverImageUpdate,
+  getUserChannelProfile,
 };
