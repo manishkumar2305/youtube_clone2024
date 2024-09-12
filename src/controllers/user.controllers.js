@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinaryService.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 // Create access token and refresh token
 const genrateAccessAndRefreshToken = async (userId) => {
@@ -354,6 +355,11 @@ const coverImageUpdate = asyncHandler(async (req, res) => {
   }
 });
 
+// Get current user
+const getCurrentUser = asyncHandler(async (req, res) => {
+  res.status(200).json(200, req?.user, "Current user fetched successfully");
+});
+
 // User channel profile details
 const getUserChannelProfile = asyncHandler(async (req, res) => {
   const { userName } = req.params;
@@ -410,6 +416,60 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, channel[0], "Channel fetch is successfully!"));
 });
 
+// Get user watch history
+const getWatchHistory = asyncHandler(async (req, res) => {
+  const user = await User.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(req?.user._id),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistroy",
+        pipline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipline: [
+                {
+                  $project: {
+                    fullName: 1,
+                    userName: 1,
+                    avatar: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: { $first: "$owner" },
+            },
+          },
+        ],
+      },
+    },
+  ]);
+
+  res
+    .status(200)
+    .json(
+      200,
+      new apiResponse(
+        200,
+        user[0].watchHistory,
+        "User watch history fetched successfully"
+      )
+    );
+});
+
 export {
   registerUser,
   loginUser,
@@ -420,4 +480,6 @@ export {
   avatarUpdate,
   coverImageUpdate,
   getUserChannelProfile,
+  getCurrentUser,
+  getWatchHistory,
 };
