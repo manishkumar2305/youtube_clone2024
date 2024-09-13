@@ -41,7 +41,6 @@ router.route("/refresh-token").post(recreateAccessToken);
 
 router.route("/update-password").patch(verifyUserAuth, updateUserPassword);
 router.route("/user-profile-update").patch(verifyUserAuth, userDetaildsUpdate);
-
 router
   .route("/avatar-update")
   .patch(verifyUserAuth, upload.single("avatar"), avatarUpdate);
@@ -50,7 +49,6 @@ router
   .patch(verifyUserAuth, upload.single("coverImage"), coverImageUpdate);
 
 router.route("/c/:userName").get(verifyUserAuth, getUserChannelProfile);
-
 router.route("/get-user").get(verifyUserAuth, getCurrentUser);
 router.route("/watch-history").get(verifyUserAuth, getWatchHistory);
 

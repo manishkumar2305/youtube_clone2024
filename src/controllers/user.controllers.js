@@ -182,8 +182,6 @@ const logoutUser = asyncHandler(async (req, res) => {
 const recreateAccessToken = asyncHandler(async (req, res) => {
   const exiestRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
 
-  console.log("asdas: ", exiestRefreshToken);
-
   if (!exiestRefreshToken) {
     throw new apiError(401, "Unauthorized user.");
   }
@@ -229,15 +227,16 @@ const updateUserPassword = asyncHandler(async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
 
-    if (!oldPassword !== "" && newPassword !== "") {
+    if (oldPassword === "" && newPassword === "") {
       throw new apiError(400, "All fields are required");
     }
 
     const user = await User.findById(req.user?._id);
 
-    const isPasswordValid = await isPasswordCorrect(oldPassword);
+    const isPasswordValid = await user.isPasswordCorrect(oldPassword);
+    console.log(isPasswordValid);
 
-    if (isPasswordValid) {
+    if (!isPasswordValid) {
       throw new apiError(401, "Old password is invalid");
     }
 
@@ -262,7 +261,7 @@ const userDetaildsUpdate = asyncHandler(async (req, res) => {
   try {
     const { fullName, email } = req.body;
 
-    if (!fullName !== "" && email !== "") {
+    if (fullName === "" && email === "") {
       throw new apiError(400, "All fields are required");
     }
 
@@ -357,7 +356,9 @@ const coverImageUpdate = asyncHandler(async (req, res) => {
 
 // Get current user
 const getCurrentUser = asyncHandler(async (req, res) => {
-  res.status(200).json(200, req?.user, "Current user fetched successfully");
+  res
+    .status(200)
+    .json(new apiResponse(200, req.user, "Current user fetched successfully"));
 });
 
 // User channel profile details
@@ -430,14 +431,14 @@ const getWatchHistory = asyncHandler(async (req, res) => {
         localField: "watchHistory",
         foreignField: "_id",
         as: "watchHistroy",
-        pipline: [
+        pipeline: [
           {
             $lookup: {
               from: "users",
               localField: "owner",
               foreignField: "_id",
               as: "owner",
-              pipline: [
+              pipeline: [
                 {
                   $project: {
                     fullName: 1,
@@ -457,6 +458,8 @@ const getWatchHistory = asyncHandler(async (req, res) => {
       },
     },
   ]);
+
+  console.log("user: ", user);
 
   res
     .status(200)
