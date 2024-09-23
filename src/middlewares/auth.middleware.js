@@ -3,7 +3,7 @@ import { User } from "../models/user.model.js";
 import { apiError } from "../utils/apiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-export const verifyUserAuth = asyncHandler(async (req, res, next) => {
+export const verifyUserAuth = asyncHandler(async (req, _, next) => {
   try {
     const token =
       req.cookies?.accessToken ||
