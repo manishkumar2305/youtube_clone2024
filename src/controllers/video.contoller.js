@@ -3,6 +3,7 @@ import { apiError } from "../utils/apiError.js";
 import { Video } from "../models/video.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinaryService.js";
 import { apiResponse } from "../utils/apiResponse.js";
+import mongoose from "mongoose";
 
 // Get all video with filters
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -25,11 +26,12 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
   // Build the query object
   const queryObject = {};
+
   if (query) {
     queryObject.title = { $regex: query, $options: "i" }; // Case-insensitive search
   }
   if (userId) {
-    queryObject.owner = userId;
+    queryObject.owner = new mongoose.Types.ObjectId(userId);
   }
 
   try {
@@ -64,7 +66,10 @@ const getAllVideos = asyncHandler(async (req, res) => {
       )
     );
   } catch (error) {
-    throw new apiError(400, error?.message);
+    throw new apiError(
+      400,
+      error?.message || "Somthing went wrong while get all videos fetch"
+    );
   }
 });
 
@@ -73,7 +78,7 @@ const publishVideo = asyncHandler(async (req, res) => {
   try {
     const { title, description } = req.body;
 
-    if (!title && !description) {
+    if (!title || !description) {
       throw new apiError(400, "Title and description are required");
     }
 
@@ -139,7 +144,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
     const { title, description } = req.body;
 
-    if (!(title && description)) {
+    if (!(title || description)) {
       throw new apiError(400, "title and description are required files.");
     }
 
